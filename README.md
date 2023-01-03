@@ -1,6 +1,8 @@
 # _HAL-STM32F401-UART
 This project uses STM32CubeIDE and it's a program created to practice my C habilities during the course 'Mastering Microcontroller: Timers, PWM, CAN, Low Power (MCU2)'. I am using a NUCLEO-F401RE board.
 
+**HAL FW version -> 1.27.1.**
+
 ## Creating the project (MX Cube)
 
 Inside the STM32CubeIDE v1.10.1 (and with an open Workspace for this course), I go to *File -> New project -> STM32 Project -> Board Selector*. Then, I add the board model and click Next.
