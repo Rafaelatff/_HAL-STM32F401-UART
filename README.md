@@ -57,5 +57,39 @@ After generating the code I had:
 
 ![image](https://user-images.githubusercontent.com/58916022/210438463-a753dde8-40fa-4af7-8371-5426903a9f53.png)
 
+## Understanding a little bit of the structure
 
+## Understanding a little bit of the codes
 
+HAL_MspInit() (@file stm32f4xx_hal_msp.c) must initialize the low level processor specifics. The API comes with those information:
+
+![image](https://user-images.githubusercontent.com/58916022/210556222-e88e8989-25dc-4ce9-816d-c3d8c6a9c37c.png)
+
+On the course, the teacher told that HAL_MspInit() has to (all information found on Generic User Guide of Cortex™-M4 Devices document, DUI 0553B): 
+
+- 1. Set up the priority grouping of the arm cortex mx processor
+
+![image](https://user-images.githubusercontent.com/58916022/210556965-f39d7f34-f81d-4de1-9c38-ee29006c00be.png)
+
+The function is found on stm32f4xx_hal_cortex.c.
+
+![image](https://user-images.githubusercontent.com/58916022/210557232-622ee0ec-69ff-4e9e-b422-4756ff5e4fb1.png)
+
+- 2. Enable the required system exceptions of the arm mx processor
+
+![image](https://user-images.githubusercontent.com/58916022/210555514-92777793-a9d9-4be6-8a93-55325025f09c.png)
+
+```c
+// Setting example
+  SCB->SHCSR |= 0x7 << 16; //System Control Block, set bits 16, 17 and 18 
+```
+
+- 3. Configure the priority for the system exceptions
+
+There is no need of setting priority for systick once that HAL_Init() (@file main.c) -> HAL_InitTick(TICK_INT_PRIORITY) (@file stm32f4xx_hal.c)
+
+```c
+	HAL_NVIC_SetPriority(MemoryManagement_IRQn,0,0); // for every system exception
+	HAL_NVIC_SetPriority(BusFault_IRQn,0,0); 	 // I set the priority
+	HAL_NVIC_SetPriority(UsageFault_IRQn,0,0); 	 // macros are in stm32f410xx.h header file
+  ```
