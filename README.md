@@ -166,11 +166,32 @@ Well, in reallity I don't need to add this function, since in the function HAL_U
 
 ![image](https://user-images.githubusercontent.com/58916022/210612413-97e0ab02-c532-4f3a-98e4-b99f3bc599e8.png)
 
+Important note: **This API already call for the clock enables of GPIOA and USART2**.
+
 ## Peripheral Data Handling API Flavors
 
 Basically there are 3 ways that STM32Cube can do:
 
-- Non Interrupt based (polling);
+- Non Interrupt based (polling or also called blocking mode);
 - Interrupt based;
 - **DMA base** (uses DMA and interrupts).
+
+## Serial terminal
+
+I used the [Tera Term](https://ttssh2.osdn.jp/index.html.en) terminal. Configured it to work with same serial configuration from exercise.
+
+![image](https://user-images.githubusercontent.com/58916022/210619175-446630c2-abfe-4acc-b7cf-caf9b9e456fe.png)
+
+It wasn't showing the whole text, that is because of the systick interrupt of 1ms.
+
+![image](https://user-images.githubusercontent.com/58916022/210620251-41a3ad71-7671-4023-b333-04a4e1eeb27a.png)
+
+So, let's implement the systick handler interrupt. I leaved the same way the instructor of the course did and still didn't work.
+
+![image](https://user-images.githubusercontent.com/58916022/210622318-22492f17-f5e3-4128-91d7-254de67d825b.png)
+
+Basically on Q&a:
+
+FastBit Embedded: "if system tick interrupt and UART interrupt happens at the same time according to the priority thy will run on the cpu." also "Lets say you have to wait for some event. what if the event never occurs ? how long should the api wait before returning timeout error ? how do you implement such logic ? you need a timing base. you need some background ticking and based on that timeout will be decided. and systick timer interrupt maintains that global tick value.".
+
 
