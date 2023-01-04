@@ -61,6 +61,8 @@ After generating the code I had:
 
 ## Understanding a little bit of the codes
 
+### HAL_MspInit()
+
 HAL_MspInit() (@file stm32f4xx_hal_msp.c) must initialize the low level processor specifics. The API comes with those information:
 
 ![image](https://user-images.githubusercontent.com/58916022/210556222-e88e8989-25dc-4ce9-816d-c3d8c6a9c37c.png)
@@ -93,3 +95,19 @@ There is no need of setting priority for systick once that HAL_Init() (@file mai
 	HAL_NVIC_SetPriority(BusFault_IRQn,0,0); 	 // I set the priority
 	HAL_NVIC_SetPriority(UsageFault_IRQn,0,0); 	 // macros are in stm32f410xx.h header file
   ```
+
+### MX_USART2_UART_Init(void) 
+
+MX_USART2_UART_Init(void) (@filw usart.c) must be initialize inside the main.c code. Since the time of its initialization may depend on user application, the user must call its function.
+
+![image](https://user-images.githubusercontent.com/58916022/210567018-fa9679ad-e63b-4eab-bb5c-7808a5412e4e.png)
+
+Note that I added this code line between one USER CODE BEGIN and a USER CODE END. The reason is because if I need to change anything on *.ioc* file and regenerate the codes using STM32CubeMX, the USER CODES won't be lost! 
+
+Since I am using an API that is inside a different source file, I also need to include its header file.
+
+![image](https://user-images.githubusercontent.com/58916022/210569040-0e4a6303-caf8-40a6-9356-ffdc84cad5cf.png)
+
+MX_USART2_UART_Init() is written already by the settings made in STM32CubeMX
+
+![image](https://user-images.githubusercontent.com/58916022/210566517-20e63647-b5b9-4362-9ef0-4780fc23e62b.png)
