@@ -138,7 +138,7 @@ Inside stm32f4xx_hal_cortex.c we can find the HAL_NVIC_EnableIRQ. The available 
 
 ```c
 /* USER CODE BEGIN 1 */
-void HAL_UART_MspDeInit(UART_HandleTypeDef *huart){
+void HAL_UART_MspInit(UART_HandleTypeDef *huart){
 	// Low level inits
 	GPIO_InitTypeDef gpio_uart;
 
@@ -193,5 +193,9 @@ So, let's implement the systick handler interrupt. I leaved the same way the ins
 Basically on Q&a:
 
 FastBit Embedded: "if system tick interrupt and UART interrupt happens at the same time according to the priority thy will run on the cpu." also "Lets say you have to wait for some event. what if the event never occurs ? how long should the api wait before returning timeout error ? how do you implement such logic ? you need a timing base. you need some background ticking and based on that timeout will be decided. and systick timer interrupt maintains that global tick value.".
+
+Well, to fix, just use the right function to callculate the string size (strlen) and also add the #include <string.h>.
+
+![image](https://user-images.githubusercontent.com/58916022/210628736-a92e4aa5-1e51-45d5-b227-6fdb26fccaf1.png)
 
 
