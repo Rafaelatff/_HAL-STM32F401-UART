@@ -96,9 +96,9 @@ There is no need of setting priority for systick once that HAL_Init() (@file mai
 	HAL_NVIC_SetPriority(UsageFault_IRQn,0,0); 	 // macros are in stm32f410xx.h header file
   ```
 
-### MX_USART2_UART_Init(void) 
+### MX_USART2_UART_Init(void) - [High-Level Peripheral Init]
 
-MX_USART2_UART_Init(void) (@filw usart.c) must be initialize inside the main.c code. Since the time of its initialization may depend on user application, the user must call its function.
+MX_USART2_UART_Init(void) (@filw usart.c) must be initialize inside the main.c code. Since the time of its initialization may depend on user application, the user must call its function. This API does the **high-level initialization**.
 
 ![image](https://user-images.githubusercontent.com/58916022/210567018-fa9679ad-e63b-4eab-bb5c-7808a5412e4e.png)
 
@@ -111,3 +111,66 @@ Since I am using an API that is inside a different source file, I also need to i
 MX_USART2_UART_Init() is written already by the settings made in STM32CubeMX
 
 ![image](https://user-images.githubusercontent.com/58916022/210566517-20e63647-b5b9-4362-9ef0-4780fc23e62b.png)
+
+### HAL_UART_MspInit(UART_HandleTypeDef \*huart) - [Low-Level Peripheral Init]
+
+At the end of the  MX_USART2_UART_Init() (@file usart.c) API, the HAL_UART_Init() (@file stm32fxx_hal_uart.c) is called. Inside the HAL_UART_Init(), the  HAL_UART_MspInit(huart) is called. The function is definied as __weak, so it must be implemented by the user on stm32f4xx_hal_msp.c file.
+
+![image](https://user-images.githubusercontent.com/58916022/210579277-64f6f1b6-dac8-481e-a56c-2f5153dc5985.png)
+
+We need to enable the peripheral clock. 
+
+Then we need to configure the peripheral pins of UART:
+- UART_TX: PA2;
+- UART_RX: PA3;
+- UART_RTS: not applied;
+- UART_CTS: not applied.
+
+For the alternate function, we need to configure PA2 and PA3 as AF07 according to the microcontroller datasheet.
+
+![image](https://user-images.githubusercontent.com/58916022/210582326-81bfafac-62b2-440d-8654-d05c0c4c8c5a.png)
+
+Note: The available macros for GPIO are on file stm32f4xx_hal_gpio_ex.h, at the section of selected microcontroller.
+
+![image](https://user-images.githubusercontent.com/58916022/210602254-f7ced2d3-4314-49f2-a07c-60cf7e6f4a94.png)
+
+Inside stm32f4xx_hal_cortex.c we can find the HAL_NVIC_EnableIRQ. The available IRQn numbers are on stm32f401xe.h file. In our case, USART2_IRQn.
+
+```c
+/* USER CODE BEGIN 1 */
+void HAL_UART_MspDeInit(UART_HandleTypeDef *huart){
+	// Low level inits
+	GPIO_InitTypeDef gpio_uart;
+
+	// 1. Enable the clock for the USART2 peripheral
+	__HAL_RCC_USART2_CLK_ENABLE();
+
+	// 2. Do the pin muxing configurations
+	gpio_uart.Pin = GPIO_PIN_2;
+	gpio_uart.Mode = GPIO_MODE_AD_PP;
+	gpio_uart.Pull = PULLUP;
+	gpio_uart.Speed = GPIO_SPEED_FREQ_LOW;
+	gpio_uart.Alternate = GPIO_AF7_USART2; //UART2_TX
+	HAL_GPIO_Init(GPIOA,&gpio_uart); // GPIO doesn't have handle struct
+
+	gpio_uart.Pin = GPIO_PIN_3;	//UART2_RX
+	HAL_GPIO_Init(GPIOA,&gpio_uart); // GPIO doesn't have handle struct
+
+	// 3. Enable the IRQn
+	HAL_NVIC_EnableIRQ(USART2_IRQn);
+	HAL_NVIC_SetPriority(USART2_IRQn, 15, 0);
+}
+/* USER CODE END 1 */
+```
+Well, in reallity I don't need to add this function, since in the function HAL_UART_Init() (@file stm32f4xx_hal_uart.c) already call another function with name HAL_UART_MspInit() (@file usart.c). This function does all the low-level initialization:
+
+![image](https://user-images.githubusercontent.com/58916022/210612413-97e0ab02-c532-4f3a-98e4-b99f3bc599e8.png)
+
+## Peripheral Data Handling API Flavors
+
+Basically there are 3 ways that STM32Cube can do:
+
+- Non Interrupt based (polling);
+- Interrupt based;
+- **DMA base** (uses DMA and interrupts).
+
