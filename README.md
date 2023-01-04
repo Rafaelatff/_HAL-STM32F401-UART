@@ -176,7 +176,7 @@ Basically there are 3 ways that STM32Cube can do:
 - Interrupt based;
 - **DMA base** (uses DMA and interrupts).
 
-## Serial terminal
+## Part I - Serial terminal - Trasmitting data
 
 I used the [Tera Term](https://ttssh2.osdn.jp/index.html.en) terminal. Configured it to work with same serial configuration from exercise.
 
@@ -198,4 +198,164 @@ Well, to fix, just use the right function to callculate the string size (strlen)
 
 ![image](https://user-images.githubusercontent.com/58916022/210628736-a92e4aa5-1e51-45d5-b227-6fdb26fccaf1.png)
 
+```c
+/* Includes ------------------------------------------------------------------*/
+#include "main.h"
+#include "tim.h"
 
+/* Private includes ----------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+#include <string.h> // to use strlen function
+#include "usart.h"
+
+/* USER CODE END Includes */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN PV */
+char *user_data = "The application is running\r\n";
+/* USER CODE END PV */
+
+/* Private function prototypes -----------------------------------------------*/
+void SystemClock_Config(void);
+/* USER CODE BEGIN PFP */
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+
+/* USER CODE END 0 */
+
+/**
+  * @brief  The application entry point.
+  * @retval int
+  */
+int main(void)
+{
+  /* USER CODE BEGIN 1 */
+
+  /* USER CODE END 1 */
+
+  /* MCU Configuration--------------------------------------------------------*/
+
+  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+  HAL_Init();
+
+  /* USER CODE BEGIN Init */
+
+  /* USER CODE END Init */
+
+  /* USER CODE BEGIN SysInit */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_TIM11_Init();
+  /* USER CODE BEGIN 2 */
+  MX_USART2_UART_Init();
+
+  HAL_UART_Transmit(&huart2, (uint8_t*)user_data, (uint16_t)strlen(user_data), 128);
+  // HAL_MAX_DELAY : How long blocking code should way until timeout
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+    /* USER CODE END WHILE */
+
+    /* USER CODE BEGIN 3 */
+  }
+  /* USER CODE END 3 */
+}
+```
+## Part II - Serial terminal - Receiving data
+
+Now let's prepare the code to receive data from terminal and then send it back the data.
+
+Change a few configurations on Tera Term, else you won't see the characters while you write:
+
+![image](https://user-images.githubusercontent.com/58916022/210635058-eb07d580-49df-4c93-af1b-b245af9a5165.png)
+
+The changed part of the code to test the RX:
+
+```c
+  // PART I
+  HAL_UART_Transmit(&huart2, (uint8_t*)user_data, (uint16_t)strlen(user_data), HAL_MAX_DELAY);
+  // HAL_MAX_DELAY : How long blocking code should way until timeout
+
+  // PART II
+  uint8_t rcvd_data;
+  uint8_t data_buffer[100];
+  uint32_t count =0;
+  while(1){
+	  HAL_UART_Receive(&huart2, &rcvd_data, 1, HAL_MAX_DELAY); // Reads 1 byte
+	  if(rcvd_data == '\r'){ //\r == enter
+		  break;
+	  } else {
+		  data_buffer[count++]= rcvd_data;
+	  }
+  }
+  HAL_UART_Transmit(&huart2, data_buffer, count, HAL_MAX_DELAY);
+```
+Results so far: 
+
+![image](https://user-images.githubusercontent.com/58916022/210635339-710b9c1b-2860-4182-9084-76cc59298551.png)
+
+## Part III - Send back the data but in Upper Case format
+
+I added this private user code before main():
+
+```c
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
+uint8_t convert_to_capital(uint8_t data){
+	if (data >= 'a' && data <= 'z'){ // this means is lower case
+		data = data - ('a'-'A');
+	}
+	return data;
+}
+/* USER CODE END 0 */
+```
+
+And changed the code in main to:
+
+```c
+  // PART I
+  HAL_UART_Transmit(&huart2, (uint8_t*)user_data, (uint16_t)strlen(user_data), HAL_MAX_DELAY);
+  // HAL_MAX_DELAY : How long blocking code should way until timeout
+
+  // PART II and III
+  uint8_t rcvd_data;
+  uint8_t data_buffer[100];
+  uint32_t count =0;
+  while(1){
+	  HAL_UART_Receive(&huart2, &rcvd_data, 1, HAL_MAX_DELAY); // Reads 1 byte
+	  if(rcvd_data == '\r'){ //\r == enter
+		  break;
+	  } else {
+		  data_buffer[count++]= convert_to_capital(rcvd_data);
+	  }
+  }
+  data_buffer[count++]= '\r'; // to add carriage return
+  HAL_UART_Transmit(&huart2, data_buffer, count, HAL_MAX_DELAY);
+```
+
+The results:
+
+![image](https://user-images.githubusercontent.com/58916022/210636438-d12d3f35-01d8-48be-bb9c-53f478a64735.png)
